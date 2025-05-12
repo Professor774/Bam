@@ -1,0 +1,137 @@
+<!DOCTYPE html><html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VaultBox</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      color: #fff;
+      font-family: Arial, sans-serif;
+    }
+    .login {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .chat {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+    }
+    header {
+      padding: 1rem;
+      background: #222;
+      text-align: center;
+      font-weight: bold;
+    }
+    .messages {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .message {
+      background: #333;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      max-width: 80%;
+    }
+    .sender {
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+    .input-area {
+      display: flex;
+      padding: 0.5rem;
+      background: #222;
+      gap: 0.5rem;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      border: none;
+    }
+    input[type="file"] {
+      display: none;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 0.5rem;
+      background: #555;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="login">
+    <h2>VaultBox</h2>
+    <p>Digite a senha:</p>
+    <input type="password" id="senha" placeholder="Senha" />
+    <button onclick="acessar()">Entrar</button>
+    <p id="erro" style="color: red; display: none;">Senha incorreta</p>
+  </div>  <div class="chat">
+    <header>VaultBox - Criado por Lino</header>
+    <div class="messages" id="messages"></div>
+    <div class="input-area">
+      <input type="text" id="mensagem" placeholder="Digite uma mensagem" />
+      <button onclick="enviarMensagem()">Enviar</button>
+      <label for="arquivo">
+        <button>Anexar</button>
+      </label>
+      <input type="file" id="arquivo" multiple accept="image/*,video/*" onchange="anexarMidia(event)" />
+    </div>
+  </div>  <script>
+    const senhaCorreta = "458";
+
+    function acessar() {
+      const senha = document.getElementById("senha").value;
+      if (senha === senhaCorreta) {
+        document.querySelector(".login").style.display = "none";
+        document.querySelector(".chat").style.display = "flex";
+      } else {
+        document.getElementById("erro").style.display = "block";
+      }
+    }
+
+    function enviarMensagem() {
+      const texto = document.getElementById("mensagem").value;
+      if (!texto) return;
+      const msg = document.createElement("div");
+      msg.className = "message";
+      msg.innerHTML = `<div class='sender'>Você</div>${texto}`;
+      document.getElementById("messages").appendChild(msg);
+      document.getElementById("mensagem").value = "";
+      document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
+    }
+
+    function anexarMidia(event) {
+      const files = event.target.files;
+      const container = document.getElementById("messages");
+      for (let file of files) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const msg = document.createElement("div");
+          msg.className = "message";
+          msg.innerHTML = `<div class='sender'>Você</div>`;
+          if (file.type.startsWith("image/")) {
+            msg.innerHTML += `<img src="${e.target.result}" style="max-width:100%; border-radius:0.5rem;" />`;
+          } else if (file.type.startsWith("video/")) {
+            msg.innerHTML += `<video controls style="max-width:100%; border-radius:0.5rem;"><source src="${e.target.result}" /></video>`;
+          }
+          container.appendChild(msg);
+          container.scrollTop = container.scrollHeight;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  </script></body>
+</html>
