@@ -1,0 +1,120 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VaultBox Chat</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #121212;
+      color: white;
+      margin: 0;
+    }
+    .login, .chat {
+      display: none;
+      flex-direction: column;
+      width: 90%;
+      max-width: 400px;
+    }
+    .active {
+      display: flex;
+    }
+    input, button {
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+      border: none;
+      font-size: 1em;
+    }
+    input {
+      background: #1e1e1e;
+      color: white;
+    }
+    button {
+      background: #2e8b57;
+      color: white;
+      cursor: pointer;
+    }
+    #messages {
+      height: 300px;
+      overflow-y: scroll;
+      border: 1px solid #444;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #1e1e1e;
+    }
+  </style>
+</head>
+<body>
+  <div class="login active" id="login">
+    <h2>Digite a senha:</h2>
+    <input type="password" id="password" placeholder="Senha" />
+    <button onclick="checkPassword()">Entrar</button>
+  </div>
+
+  <div class="chat" id="chat">
+    <h2>VaultBox Chat</h2>
+    <div id="messages"></div>
+    <input type="text" id="messageInput" placeholder="Digite sua mensagem..." />
+    <button onclick="sendMessage()">Enviar</button>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+    const supabaseUrl = 'https://fcyrellpywnymnbgazzp.supabase.co'
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjeXJlbGxweXdueW1uYmdhenpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNzg0NTEsImV4cCI6MjA2MjY1NDQ1MX0.dEs5Ehmpk-JVWlbARMQkUqKZRFlCJPNczw5QAraN_cs'
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    const login = document.getElementById("login")
+    const chat = document.getElementById("chat")
+    const passwordInput = document.getElementById("password")
+    const messageInput = document.getElementById("messageInput")
+    const messagesDiv = document.getElementById("messages")
+
+    function checkPassword() {
+      if (passwordInput.value === "458") {
+        login.classList.remove("active")
+        chat.classList.add("active")
+        loadMessages()
+        subscribeToMessages()
+      } else {
+        alert("Senha incorreta")
+      }
+    }
+
+    async function sendMessage() {
+      const content = messageInput.value.trim()
+      if (!content) return
+      await supabase.from("messages").insert([{ content }])
+      messageInput.value = ""
+    }
+
+    async function loadMessages() {
+      const { data, error } = await supabase.from("messages").select("*").order("id", { ascending: true })
+      if (data) {
+        messagesDiv.innerHTML = data.map(m => `<div>${m.content}</div>`).join("")
+        messagesDiv.scrollTop = messagesDiv.scrollHeight
+      }
+    }
+
+    function subscribeToMessages() {
+      supabase.channel("messages-channel")
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, payload => {
+          const message = payload.new
+          const div = document.createElement("div")
+          div.textContent = message.content
+          messagesDiv.appendChild(div)
+          messagesDiv.scrollTop = messagesDiv.scrollHeight
+        })
+        .subscribe()
+    }
+  </script>
+</body>
+</html>
