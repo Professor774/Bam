@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LINO - Enigma</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 {
+      color: red;
+      font-size: 40px;
+      margin-bottom: 20px;
+    }
+    .login-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 100px;
+    }
+    .login-screen input {
+      padding: 10px;
+      font-size: 18px;
+      width: 200px;
+      margin-top: 10px;
+      text-align: center;
+    }
+    .login-screen button {
+      padding: 10px;
+      margin-top: 10px;
+      background: red;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .app {
+      display: none;
+    }
+    input, button, textarea {
+      margin: 10px auto;
+      padding: 10px;
+      width: 90%;
+      max-width: 400px;
+      display: block;
+    }
+    img { max-width: 90%; margin: 10px auto; display: block; }
+    #canvas { display: none; }
+  </style>
+</head>
+<body>
+  <div class="login-screen" id="loginScreen">
+    <h1>LINO</h1>
+    <input type="password" id="passwordInput" placeholder="Digite a senha" />
+    <button onclick="checkPassword()">Entrar</button>
+  </div>
+
+  <div class="app" id="app">
+    <h1>LINO</h1>
+
+    <h2>1. Codificar Mensagem</h2>
+    <input type="file" id="baseImageInput" accept="image/*">
+    <textarea id="secretMessage" placeholder="Digite a mensagem secreta..."></textarea>
+    <button onclick="encodeMessage()">Codificar</button>
+    <a id="downloadLink" style="display:none;" download="imagem_codificada.png">Salvar imagem codificada</a>
+    <img id="outputImage" />
+
+    <hr />
+
+    <h2>2. Decodificar Mensagem</h2>
+    <input type="file" id="imageInput" accept="image/*" />
+    <button onclick="decodeMessage()">Revelar Mensagem</button>
+    <p id="result" style="font-weight: bold; font-size: 18px;"></p>
+
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <script>
+    function checkPassword() {
+      const input = document.getElementById("passwordInput").value;
+      if (input === "458") {
+        document.getElementById("loginScreen").style.display = "none";
+        document.getElementById("app").style.display = "block";
+      } else {
+        alert("Senha incorreta!");
+      }
+    }
+
+    function encodeMessage() {
+      const file = document.getElementById("baseImageInput").files[0];
+      const message = document.getElementById("secretMessage").value;
+      if (!file || !message) {
+        alert("Escolha uma imagem e digite a mensagem.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = new Image();
+        img.onload = function () {
+          const canvas = document.getElementById("canvas");
+          const ctx = canvas.getContext("2d");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imageData.data;
+
+          for (let i = 0; i < message.length && i * 4 < data.length; i++) {
+            const charCode = message.charCodeAt(i);
+            data[i * 4] = charCode;
+          }
+          if ((message.length + 1) * 4 < data.length) {
+            data[message.length * 4] = 0; // Fim da mensagem
+          }
+
+          ctx.putImageData(imageData, 0, 0);
+          const dataUrl = canvas.toDataURL("image/png");
+
+          document.getElementById("outputImage").src = dataUrl;
+          const link = document.getElementById("downloadLink");
+          link.href = dataUrl;
+          link.style.display = "block";
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function decodeMessage() {
+      const file = document.getElementById("imageInput").files[0];
+      if (!file) {
+        alert("Escolha uma imagem primeiro.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = new Image();
+        img.onload = function () {
+          const canvas = document.getElementById("canvas");
+          const ctx = canvas.getContext("2d");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imgData.data;
+
+          let message = "";
+          for (let i = 0; i < 100 * 4 && i < data.length; i += 4) {
+            const charCode = data[i];
+            if (charCode === 0) break;
+            message += String.fromCharCode(charCode);
+          }
+
+          const resultEl = document.getElementById("result");
+          resultEl.innerText = "Mensagem: " + message;
+
+          setTimeout(() => {
+            resultEl.innerText = "";
+          }, 30000);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  </script>
+</body>
+</html>
