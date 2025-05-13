@@ -1,120 +1,102 @@
-
-<!DOCTYPE html>
-<html lang="pt-BR">
+<!DOCTYPE html><html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>VaultBox Chat</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background: #121212;
+      background: #1a1a1a;
       color: white;
       margin: 0;
+      padding: 0;
     }
-    .login, .chat {
-      display: none;
-      flex-direction: column;
-      width: 90%;
-      max-width: 400px;
+    .chat-container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 2rem;
     }
-    .active {
-      display: flex;
+    .messages {
+      background: #333;
+      padding: 1rem;
+      border-radius: 8px;
+      height: 400px;
+      overflow-y: auto;
+      margin-bottom: 1rem;
     }
-    input, button {
-      padding: 10px;
-      margin-top: 10px;
+    .message {
+      margin-bottom: 10px;
+      padding: 8px;
+      background: #444;
       border-radius: 5px;
-      border: none;
-      font-size: 1em;
     }
-    input {
-      background: #1e1e1e;
-      color: white;
+    form {
+      display: flex;
+      gap: 10px;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
     }
     button {
-      background: #2e8b57;
+      background: #00b894;
       color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 5px;
       cursor: pointer;
-    }
-    #messages {
-      height: 300px;
-      overflow-y: scroll;
-      border: 1px solid #444;
-      padding: 10px;
-      margin-bottom: 10px;
-      background: #1e1e1e;
     }
   </style>
 </head>
 <body>
-  <div class="login active" id="login">
-    <h2>Digite a senha:</h2>
-    <input type="password" id="password" placeholder="Senha" />
-    <button onclick="checkPassword()">Entrar</button>
-  </div>
-
-  <div class="chat" id="chat">
+  <div class="chat-container">
     <h2>VaultBox Chat</h2>
-    <div id="messages"></div>
-    <input type="text" id="messageInput" placeholder="Digite sua mensagem..." />
-    <button onclick="sendMessage()">Enviar</button>
-  </div>
+    <div class="messages" id="messages"></div>
+    <form id="message-form">
+      <input type="text" id="message-input" placeholder="Digite sua mensagem..." required />
+      <button type="submit">Enviar</button>
+    </form>
+  </div>  <script>
+    const SUPABASE_URL = 'https://bwhzxwpzxdkkxykebjmo.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGci...'; // Truncado por segurança pública
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const messagesContainer = document.getElementById('messages');
+    const form = document.getElementById('message-form');
+    const input = document.getElementById('message-input');
 
-    const supabaseUrl = 'https://fcyrellpywnymnbgazzp.supabase.co'
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjeXJlbGxweXdueW1uYmdhenpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNzg0NTEsImV4cCI6MjA2MjY1NDQ1MX0.dEs5Ehmpk-JVWlbARMQkUqKZRFlCJPNczw5QAraN_cs'
-    const supabase = createClient(supabaseUrl, supabaseKey)
+    const addMessage = (msg) => {
+      const div = document.createElement('div');
+      div.className = 'message';
+      div.textContent = msg.content;
+      messagesContainer.appendChild(div);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    };
 
-    const login = document.getElementById("login")
-    const chat = document.getElementById("chat")
-    const passwordInput = document.getElementById("password")
-    const messageInput = document.getElementById("messageInput")
-    const messagesDiv = document.getElementById("messages")
+    const loadMessages = async () => {
+      const { data } = await supabase.from('messages').select('*').order('created_at', { ascending: true });
+      data.forEach(addMessage);
+    };
 
-    function checkPassword() {
-      if (passwordInput.value === "458") {
-        login.classList.remove("active")
-        chat.classList.add("active")
-        loadMessages()
-        subscribeToMessages()
-      } else {
-        alert("Senha incorreta")
+    supabase
+      .channel('public:messages')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+        addMessage(payload.new);
+      })
+      .subscribe();
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const content = input.value;
+      if (content.trim() !== '') {
+        await supabase.from('messages').insert([{ content }]);
+        input.value = '';
       }
-    }
+    });
 
-    async function sendMessage() {
-      const content = messageInput.value.trim()
-      if (!content) return
-      await supabase.from("messages").insert([{ content }])
-      messageInput.value = ""
-    }
-
-    async function loadMessages() {
-      const { data, error } = await supabase.from("messages").select("*").order("id", { ascending: true })
-      if (data) {
-        messagesDiv.innerHTML = data.map(m => `<div>${m.content}</div>`).join("")
-        messagesDiv.scrollTop = messagesDiv.scrollHeight
-      }
-    }
-
-    function subscribeToMessages() {
-      supabase.channel("messages-channel")
-        .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, payload => {
-          const message = payload.new
-          const div = document.createElement("div")
-          div.textContent = message.content
-          messagesDiv.appendChild(div)
-          messagesDiv.scrollTop = messagesDiv.scrollHeight
-        })
-        .subscribe()
-    }
-  </script>
-</body>
+    loadMessages();
+  </script></body>
 </html>
