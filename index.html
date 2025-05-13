@@ -1,11 +1,57 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>VaultBox Chat</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script type="module">
+    // Importa o Firebase diretamente
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    // Configuração do Firebase (seu projeto)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDPzL...yO-Y", // (use a chave que já configuramos)
+      authDomain: "vaultbox-chat.firebaseapp.com",
+      databaseURL: "https://vaultbox-chat-default-rtdb.firebaseio.com",
+      projectId: "vaultbox-chat",
+      storageBucket: "vaultbox-chat.appspot.com",
+      messagingSenderId: "47672372860",
+      appId: "1:47672372860:web:f92d51c9b2d161299ce65b"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+    const messagesRef = ref(database, 'messages');
+
+    // DOM
+    const messagesContainer = document.getElementById('messages');
+    const form = document.getElementById('message-form');
+    const input = document.getElementById('message-input');
+
+    // Enviar mensagem
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (text) {
+        await push(messagesRef, {
+          content: text,
+          timestamp: Date.now()
+        });
+        input.value = '';
+      }
+    });
+
+    // Receber mensagens em tempo real
+    onChildAdded(messagesRef, (snapshot) => {
+      const msg = snapshot.val();
+      const div = document.createElement('div');
+      div.className = 'message';
+      div.textContent = msg.content;
+      messagesContainer.appendChild(div);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    });
+  </script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -62,45 +108,5 @@
       <button type="submit">Enviar</button>
     </form>
   </div>
-  <script>
-    const SUPABASE_URL = 'https://bwhzxwpzxdkkxykebjmo.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTcxNTU4NTgzNCwiZXhwIjoxNzQ3MTIxODM0fQ.y0s_U0URSMRqxMvXn_xAKMHGFMkFM9Y7GHkHeEPEDzY';
-
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const messagesContainer = document.getElementById('messages');
-    const form = document.getElementById('message-form');
-    const input = document.getElementById('message-input');
-
-    const addMessage = (msg) => {
-      const div = document.createElement('div');
-      div.className = 'message';
-      div.textContent = msg.content;
-      messagesContainer.appendChild(div);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    };
-
-    const loadMessages = async () => {
-      const { data } = await supabase.from('messages').select('*').order('created_at', { ascending: true });
-      data.forEach(addMessage);
-    };
-
-    supabase
-      .channel('messages_channel')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
-        addMessage(payload.new);
-      })
-      .subscribe();
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const content = input.value;
-      if (content.trim() !== '') {
-        await supabase.from('messages').insert([{ content }]);
-        input.value = '';
-      }
-    });
-
-    loadMessages();
-  </script>
 </body>
 </html>
