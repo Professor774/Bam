@@ -1,61 +1,115 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Enigma Web</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; text-align: center; }
-        input, textarea, button { margin: 10px; padding: 10px; width: 90%; max-width: 400px; }
-        img { max-width: 90%; margin-top: 20px; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Enigma: Codificar e Decodificar</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; text-align: center; }
+    h2 { margin-top: 30px; }
+    input, button, textarea { margin: 10px auto; padding: 10px; width: 90%; max-width: 400px; display: block; }
+    img { max-width: 90%; margin: 10px auto; display: block; }
+    #canvas { display: none; }
+  </style>
 </head>
 <body>
-    <h2>Esconda sua mensagem na imagem</h2>
-    <input type="file" id="imageInput" accept="image/*" />
-    <textarea id="messageInput" placeholder="Digite sua mensagem secreta..."></textarea>
-    <br />
-    <button onclick="encodeMessage()">Esconder Mensagem</button>
-    <br />
-    <canvas id="canvas" style="display:none;"></canvas>
-    <img id="outputImage" />
-    <br />
-    <a id="downloadLink" style="display:none;" download="imagem_secreta.png">Salvar imagem</a>
 
-    <script>
-        function encodeMessage() {
-            const file = document.getElementById("imageInput").files[0];
-            const message = document.getElementById("messageInput").value;
-            if (!file || !message) {
-                alert("Escolha uma imagem e escreva uma mensagem.");
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const img = new Image();
-                img.onload = function () {
-                    const canvas = document.getElementById("canvas");
-                    const ctx = canvas.getContext("2d");
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    ctx.drawImage(img, 0, 0);
-                    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    const data = imgData.data;
-                    for (let i = 0; i < message.length * 4 && i < data.length; i += 4) {
-                        data[i] = message.charCodeAt(i / 4);
-                    }
-                    ctx.putImageData(imgData, 0, 0);
-                    const outputImage = document.getElementById("outputImage");
-                    const downloadLink = document.getElementById("downloadLink");
-                    const dataURL = canvas.toDataURL("image/png");
-                    outputImage.src = dataURL;
-                    downloadLink.href = dataURL;
-                    downloadLink.style.display = "inline-block";
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-    </script>
+  <h1>Enigma: Codificar e Decodificar Imagem</h1>
+
+  <!-- Codificador -->
+  <h2>1. Codificar Mensagem</h2>
+  <input type="file" id="baseImageInput" accept="image/*">
+  <textarea id="secretMessage" placeholder="Digite a mensagem secreta..."></textarea>
+  <button onclick="encodeMessage()">Codificar</button>
+  <a id="downloadLink" style="display:none;" download="imagem_codificada.png">Salvar imagem codificada</a>
+  <img id="outputImage" />
+
+  <hr />
+
+  <!-- Decodificador -->
+  <h2>2. Decodificar Mensagem</h2>
+  <input type="file" id="imageInput" accept="image/*" />
+  <button onclick="decodeMessage()">Revelar Mensagem</button>
+  <p id="result" style="font-weight: bold; font-size: 18px;"></p>
+
+  <canvas id="canvas"></canvas>
+
+  <script>
+    function encodeMessage() {
+      const file = document.getElementById("baseImageInput").files[0];
+      const message = document.getElementById("secretMessage").value;
+      if (!file || !message) {
+        alert("Escolha uma imagem e digite a mensagem.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = new Image();
+        img.onload = function () {
+          const canvas = document.getElementById("canvas");
+          const ctx = canvas.getContext("2d");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imageData.data;
+
+          for (let i = 0; i < message.length && i * 4 < data.length; i++) {
+            const charCode = message.charCodeAt(i);
+            data[i * 4] = charCode;
+          }
+          if ((message.length + 1) * 4 < data.length) {
+            data[message.length * 4] = 0; // Fim da mensagem
+          }
+
+          ctx.putImageData(imageData, 0, 0);
+          const dataUrl = canvas.toDataURL("image/png");
+
+          document.getElementById("outputImage").src = dataUrl;
+          const link = document.getElementById("downloadLink");
+          link.href = dataUrl;
+          link.style.display = "block";
+          link.innerText = "Salvar imagem codificada";
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function decodeMessage() {
+      const file = document.getElementById("imageInput").files[0];
+      if (!file) {
+        alert("Escolha uma imagem primeiro.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = new Image();
+        img.onload = function () {
+          const canvas = document.getElementById("canvas");
+          const ctx = canvas.getContext("2d");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imgData.data;
+
+          let message = "";
+          for (let i = 0; i < 100 * 4 && i < data.length; i += 4) {
+            const charCode = data[i];
+            if (charCode === 0) break;
+            message += String.fromCharCode(charCode);
+          }
+
+          document.getElementById("result").innerText = "Mensagem: " + message;
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  </script>
+
 </body>
-</html>
+    </html>
