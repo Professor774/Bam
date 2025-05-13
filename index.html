@@ -85,12 +85,17 @@
         console.error("Erro ao carregar mensagens:", error);
         return;
       }
-      data.forEach(addMessage);
+      if (data) {
+        data.forEach(addMessage);
+      } else {
+        console.log("Nenhuma mensagem encontrada");
+      }
     };
 
     supabase
       .channel('public:messages')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+        console.log("Nova mensagem recebida:", payload);
         addMessage(payload.new);
       })
       .subscribe();
@@ -99,7 +104,12 @@
       e.preventDefault();
       const content = input.value;
       if (content.trim() !== '') {
-        await supabase.from('messages').insert([{ content }]);
+        const { data, error } = await supabase.from('messages').insert([{ content }]);
+        if (error) {
+          console.error("Erro ao enviar mensagem:", error);
+        } else {
+          console.log("Mensagem enviada com sucesso:", data);
+        }
         input.value = '';
       }
     });
