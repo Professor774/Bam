@@ -1,83 +1,61 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>VaultBox - Acesso Secreto</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #111;
-      color: #fff;
-      text-align: center;
-      padding: 20px;
-    }
-    img, video {
-      max-width: 100%;
-      border-radius: 10px;
-      margin: 10px 0;
-    }
-    input {
-      padding: 10px;
-      font-size: 16px;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-      background-color: #444;
-      border: 2px solid #ccc;
-      border-radius: 5px;
-    }
-    button:hover {
-      background-color: #555;
-    }
-    #image-container {
-      margin-bottom: 20px;
-    }
-    #password-container {
-      margin-top: 20px;
-    }
-    #secret-content {
-      margin-top: 20px;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Enigma Web</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; text-align: center; }
+        input, textarea, button { margin: 10px; padding: 10px; width: 90%; max-width: 400px; }
+        img { max-width: 90%; margin-top: 20px; }
+    </style>
 </head>
 <body>
+    <h2>Esconda sua mensagem na imagem</h2>
+    <input type="file" id="imageInput" accept="image/*" />
+    <textarea id="messageInput" placeholder="Digite sua mensagem secreta..."></textarea>
+    <br />
+    <button onclick="encodeMessage()">Esconder Mensagem</button>
+    <br />
+    <canvas id="canvas" style="display:none;"></canvas>
+    <img id="outputImage" />
+    <br />
+    <a id="downloadLink" style="display:none;" download="imagem_secreta.png">Salvar imagem</a>
 
-  <div id="image-container">
-    <img src="fachada.jpg" id="fachada-img" alt="Clique para revelar a imagem verdadeira" onclick="showPasswordInput()" />
-  </div>
-
-  <div id="password-container" style="display: none;">
-    <input type="password" id="password" placeholder="Digite a senha" />
-    <button onclick="unlockImage()">Revelar imagem</button>
-  </div>
-
-  <div id="secret-content" style="display: none;">
-    <h1>Imagem Revelada!</h1>
-    <img src="foto.jpg" alt="Imagem verdadeira" />
-    <video controls>
-      <source src="video.mp4" type="video/mp4" />
-      Seu navegador não suporta vídeo.
-    </video>
-  </div>
-
-  <script>
-    function showPasswordInput() {
-      document.getElementById('password-container').style.display = 'block';
-    }
-
-    function unlockImage() {
-      const password = document.getElementById('password').value.trim();
-      if (password === '458') {
-        document.getElementById('password-container').style.display = 'none';
-        document.getElementById('secret-content').style.display = 'block';
-      } else {
-        alert('Senha incorreta! Tente novamente.');
-      }
-    }
-  </script>
-
+    <script>
+        function encodeMessage() {
+            const file = document.getElementById("imageInput").files[0];
+            const message = document.getElementById("messageInput").value;
+            if (!file || !message) {
+                alert("Escolha uma imagem e escreva uma mensagem.");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = new Image();
+                img.onload = function () {
+                    const canvas = document.getElementById("canvas");
+                    const ctx = canvas.getContext("2d");
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const data = imgData.data;
+                    for (let i = 0; i < message.length * 4 && i < data.length; i += 4) {
+                        data[i] = message.charCodeAt(i / 4);
+                    }
+                    ctx.putImageData(imgData, 0, 0);
+                    const outputImage = document.getElementById("outputImage");
+                    const downloadLink = document.getElementById("downloadLink");
+                    const dataURL = canvas.toDataURL("image/png");
+                    outputImage.src = dataURL;
+                    downloadLink.href = dataURL;
+                    downloadLink.style.display = "inline-block";
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    </script>
 </body>
 </html>
