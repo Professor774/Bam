@@ -5,14 +5,55 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Enigma: Codificar e Decodificar</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; text-align: center; }
-    h2 { margin-top: 30px; }
-    input, button, textarea { margin: 10px auto; padding: 10px; width: 90%; max-width: 400px; display: block; }
-    img { max-width: 90%; margin: 10px auto; display: block; }
-    #canvas { display: none; }
+    body { 
+      font-family: Arial, sans-serif; 
+      padding: 20px; 
+      text-align: center; 
+      background-color: black; /* Fundo preto */
+      color: white; /* Texto em branco */
+    }
+    h1 {
+      color: red; /* Título em vermelho */
+    }
+    #logo {
+      max-width: 250px; /* Tamanho da logo */
+      margin: 20px auto;
+    }
+    h2 { 
+      margin-top: 30px; 
+      color: red; /* Subtítulos em vermelho */
+    }
+    input, button, textarea { 
+      margin: 10px auto; 
+      padding: 10px; 
+      width: 90%; 
+      max-width: 400px; 
+      display: block; 
+      background-color: black;
+      color: white; /* Texto de inputs e botões em branco */
+      border: 2px solid red; /* Borda vermelha */
+      font-size: 16px; /* Aumentando o tamanho da fonte para melhor visualização */
+    }
+    button {
+      cursor: pointer;
+      background-color: red; /* Botões vermelhos */
+    }
+    button:hover {
+      background-color: #cc0000; /* Efeito de hover no botão */
+    }
+    img { 
+      max-width: 90%; 
+      margin: 10px auto; 
+      display: block; 
+    }
+    #canvas { 
+      display: none; 
+    }
   </style>
 </head>
 <body>
+
+  <img src="logo-lino.png" alt="Logo Lino" id="logo" />
 
   <h1>Enigma: Codificar e Decodificar Imagem</h1>
 
@@ -112,4 +153,4 @@
   </script>
 
 </body>
-    </html>
+</html>
