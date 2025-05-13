@@ -1,0 +1,105 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VaultBox Chat</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #1a1a1a;
+      color: white;
+      margin: 0;
+      padding: 0;
+    }
+    .chat-container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    .messages {
+      background: #333;
+      padding: 1rem;
+      border-radius: 8px;
+      height: 400px;
+      overflow-y: auto;
+      margin-bottom: 1rem;
+    }
+    .message {
+      margin-bottom: 10px;
+      padding: 8px;
+      background: #444;
+      border-radius: 5px;
+    }
+    form {
+      display: flex;
+      gap: 10px;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+    }
+    button {
+      background: #00b894;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <h2>VaultBox Chat</h2>
+    <div class="messages" id="messages"></div>
+    <form id="message-form">
+      <input type="text" id="message-input" placeholder="Digite sua mensagem..." required />
+      <button type="submit">Enviar</button>
+    </form>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDULq-HI7rA2Lh3kfrDcJJTUnNS1mRWj7E",
+      authDomain: "vaultbox-chat.firebaseapp.com",
+      databaseURL: "https://vaultbox-chat-default-rtdb.firebaseio.com",
+      projectId: "vaultbox-chat",
+      storageBucket: "vaultbox-chat.appspot.com",
+      messagingSenderId: "36052709980",
+      appId: "1:36052709980:web:ffcfed212b94c9e4b139c3"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const messagesRef = db.ref("messages");
+
+    const messagesContainer = document.getElementById("messages");
+    const form = document.getElementById("message-form");
+    const input = document.getElementById("message-input");
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const content = input.value.trim();
+      if (content) {
+        messagesRef.push({ content });
+        input.value = "";
+      }
+    });
+
+    messagesRef.on("child_added", (snapshot) => {
+      const msg = snapshot.val();
+      const div = document.createElement("div");
+      div.className = "message";
+      div.textContent = msg.content;
+      messagesContainer.appendChild(div);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    });
+  </script>
+</body>
+</html>
