@@ -3,77 +3,101 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Enigma: Codificar e Decodificar</title>
+  <title>LINO - Enigma</title>
   <style>
     body { 
-      font-family: Arial, sans-serif; 
-      padding: 20px; 
-      text-align: center; 
-      background-color: black; /* Fundo preto */
-      color: white; /* Texto em branco */
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      margin: 0; 
+      padding: 0; 
+      background-color: #000;
+      color: #fff;
     }
-    h1 {
-      color: red; /* Título em vermelho */
+    header {
+      background-color: red;
+      padding: 20px 0;
+      text-align: center;
     }
-    #logo {
-      max-width: 250px; /* Tamanho da logo */
-      margin: 20px auto;
+    header h1 {
+      margin: 0;
+      font-size: 48px;
+      font-weight: bold;
+      letter-spacing: 10px;
+      color: black;
+      text-shadow: 1px 1px 2px white;
     }
-    h2 { 
-      margin-top: 30px; 
-      color: red; /* Subtítulos em vermelho */
+    main {
+      max-width: 700px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #111;
+      border-radius: 15px;
+      box-shadow: 0 0 20px red;
     }
-    input, button, textarea { 
-      margin: 10px auto; 
-      padding: 10px; 
-      width: 90%; 
-      max-width: 400px; 
-      display: block; 
-      background-color: black;
-      color: white; /* Texto de inputs e botões em branco */
-      border: 2px solid red; /* Borda vermelha */
-      font-size: 16px; /* Aumentando o tamanho da fonte para melhor visualização */
+    h2 {
+      color: red;
+      border-bottom: 1px solid red;
+      padding-bottom: 5px;
+    }
+    input, textarea, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      background-color: #000;
+      color: white;
+      border: 2px solid red;
+      border-radius: 5px;
+      font-size: 16px;
     }
     button {
-      cursor: pointer;
-      background-color: red; /* Botões vermelhos */
+      background-color: red;
+      color: black;
+      font-weight: bold;
     }
     button:hover {
-      background-color: #cc0000; /* Efeito de hover no botão */
+      background-color: #cc0000;
     }
-    img { 
-      max-width: 90%; 
-      margin: 10px auto; 
-      display: block; 
+    #downloadLink {
+      display: block;
+      margin-top: 10px;
+      color: white;
+      text-decoration: underline;
     }
-    #canvas { 
-      display: none; 
+    #outputImage, #canvas {
+      display: block;
+      max-width: 100%;
+      margin: 20px auto;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 20px;
+      color: #0f0;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
 
-  <img src="logo-lino.png" alt="Logo Lino" id="logo" />
+  <header>
+    <h1>LINO</h1>
+  </header>
 
-  <h1>Enigma: Codificar e Decodificar Imagem</h1>
+  <main>
+    <h2>1. Codificar Mensagem</h2>
+    <input type="file" id="baseImageInput" accept="image/*">
+    <textarea id="secretMessage" placeholder="Digite a mensagem secreta..."></textarea>
+    <button onclick="encodeMessage()">Codificar</button>
+    <a id="downloadLink" download="imagem_codificada.png" style="display:none;">Salvar imagem codificada</a>
+    <img id="outputImage" />
 
-  <!-- Codificador -->
-  <h2>1. Codificar Mensagem</h2>
-  <input type="file" id="baseImageInput" accept="image/*">
-  <textarea id="secretMessage" placeholder="Digite a mensagem secreta..."></textarea>
-  <button onclick="encodeMessage()">Codificar</button>
-  <a id="downloadLink" style="display:none;" download="imagem_codificada.png">Salvar imagem codificada</a>
-  <img id="outputImage" />
+    <hr />
 
-  <hr />
+    <h2>2. Decodificar Mensagem</h2>
+    <input type="file" id="imageInput" accept="image/*" />
+    <button onclick="decodeMessage()">Revelar Mensagem</button>
+    <p id="result"></p>
+  </main>
 
-  <!-- Decodificador -->
-  <h2>2. Decodificar Mensagem</h2>
-  <input type="file" id="imageInput" accept="image/*" />
-  <button onclick="decodeMessage()">Revelar Mensagem</button>
-  <p id="result" style="font-weight: bold; font-size: 18px;"></p>
-
-  <canvas id="canvas"></canvas>
+  <canvas id="canvas" style="display:none;"></canvas>
 
   <script>
     function encodeMessage() {
@@ -111,7 +135,6 @@
           const link = document.getElementById("downloadLink");
           link.href = dataUrl;
           link.style.display = "block";
-          link.innerText = "Salvar imagem codificada";
         };
         img.src = e.target.result;
       };
@@ -144,7 +167,13 @@
             message += String.fromCharCode(charCode);
           }
 
-          document.getElementById("result").innerText = "Mensagem: " + message;
+          const result = document.getElementById("result");
+          result.innerText = "Mensagem: " + message;
+
+          // Proteção: esconde mensagem após 30 segundos
+          setTimeout(() => {
+            result.innerText = "Mensagem expirada por segurança.";
+          }, 30000);
         };
         img.src = e.target.result;
       };
