@@ -94,7 +94,6 @@
 
     <!-- Codificar Imagem dentro de Imagem -->
     <h2>3. Esconder Imagem dentro de outra</h2>
-    <p>Escolha a imagem "capa" (imagem principal) e a imagem "escondida" (imagem que será escondida na outra).</p>
     <input type="file" id="hostImageInput" accept="image/*">
     <input type="file" id="hiddenImageInput" accept="image/*">
     <button onclick="encodeHiddenImage()">Codificar Imagem</button>
@@ -123,151 +122,150 @@
       }
     }
 
+    // Funções para codificar e decodificar mensagens
     function encodeMessage() {
-      const file = document.getElementById("baseImageInput").files[0];
-      const message = document.getElementById("secretMessage").value;
-      if (!file || !message) {
-        alert("Escolha uma imagem e digite a mensagem.");
-        return;
-      }
-
+      const fileInput = document.getElementById("baseImageInput");
+      const secretMessage = document.getElementById("secretMessage").value;
       const reader = new FileReader();
-      reader.onload = function (e) {
-        const img = new Image();
-        img.onload = function () {
-          const canvas = document.getElementById("canvas");
-          const ctx = canvas.getContext("2d");
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0);
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const data = imageData.data;
 
-          for (let i = 0; i < message.length && i * 4 < data.length; i++) {
-            data[i * 4] = message.charCodeAt(i);
-          }
-          if ((message.length + 1) * 4 < data.length) {
-            data[message.length * 4] = 0;
+      reader.onload = function(e) {
+        const image = new Image();
+        image.onload = function() {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = image.width;
+          canvas.height = image.height;
+          ctx.drawImage(image, 0, 0);
+
+          const messageBinary = Array.from(secretMessage).map(char => char.charCodeAt(0).toString(2).padStart(8, '0')).join('');
+          let pixelIndex = 0;
+
+          for (let i = 0; i < messageBinary.length; i++) {
+            const x = pixelIndex % canvas.width;
+            const y = Math.floor(pixelIndex / canvas.width);
+            const pixel = ctx.getImageData(x, y, 1, 1);
+            const pixelData = pixel.data;
+
+            const bit = messageBinary[i];
+            pixelData[0] = (pixelData[0] & 0xFE) | bit; // Modificando o último bit do canal vermelho
+            ctx.putImageData(pixel, x, y);
+
+            pixelIndex++;
+            if (pixelIndex >= canvas.width * canvas.height) break;
           }
 
-          ctx.putImageData(imageData, 0, 0);
-          const dataUrl = canvas.toDataURL("image/png");
-          document.getElementById("outputImage").src = dataUrl;
-          const link = document.getElementById("downloadLink");
-          link.href = dataUrl;
-          link.style.display = "block";
+          const dataURL = canvas.toDataURL();
+          const outputImage = document.getElementById("outputImage");
+          outputImage.src = dataURL;
+
+          const downloadLink = document.getElementById("downloadLink");
+          downloadLink.style.display = 'inline';
+          downloadLink.href = dataURL;
         };
-        img.src = e.target.result;
+        image.src = e.target.result;
       };
-      reader.readAsDataURL(file);
+
+      reader.readAsDataURL(fileInput.files[0]);
     }
 
     function decodeMessage() {
-      const file = document.getElementById("imageInput").files[0];
-      if (!file) {
-        alert("Escolha uma imagem primeiro.");
-        return;
-      }
-
+      const fileInput = document.getElementById("imageInput");
       const reader = new FileReader();
-      reader.onload = function (e) {
-        const img = new Image();
-        img.onload = function () {
-          const canvas = document.getElementById("canvas");
-          const ctx = canvas.getContext("2d");
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0);
-          const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
 
-          let message = "";
-          for (let i = 0; i < 100 * 4 && i < data.length; i += 4) {
-            const charCode = data[i];
-            if (charCode === 0) break;
-            message += String.fromCharCode(charCode);
+      reader.onload = function(e) {
+        const image = new Image();
+        image.onload = function() {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = image.width;
+          canvas.height = image.height;
+          ctx.drawImage(image, 0, 0);
+
+          let messageBinary = '';
+          for (let i = 0; i < canvas.width * canvas.height; i++) {
+            const x = i % canvas.width;
+            const y = Math.floor(i / canvas.width);
+            const pixel = ctx.getImageData(x, y, 1, 1);
+            const pixelData = pixel.data;
+
+            const bit = pixelData[0] & 1;
+            messageBinary += bit;
+            if (messageBinary.length % 8 === 0) {
+              const byte = messageBinary.slice(-8);
+              const charCode = parseInt(byte, 2);
+              if (charCode === 0) break; // Fim da mensagem
+            }
           }
 
-          const resultEl = document.getElementById("result");
-          resultEl.innerText = "Mensagem: " + message;
-
-          setTimeout(() => {
-            resultEl.innerText = "";
-          }, 30000); // limpa após 30 segundos
+          const message = messageBinary.match(/.{8}/g).map(byte => String.fromCharCode(parseInt(byte, 2))).join('');
+          const resultElement = document.getElementById("result");
+          resultElement.textContent = message;
         };
-        img.src = e.target.result;
+        image.src = e.target.result;
       };
-      reader.readAsDataURL(file);
+
+      reader.readAsDataURL(fileInput.files[0]);
     }
 
     function encodeHiddenImage() {
-      const hostFile = document.getElementById("hostImageInput").files[0];
-      const hiddenFile = document.getElementById("hiddenImageInput").files[0];
-      if (!hostFile || !hiddenFile) {
-        alert("Escolha as duas imagens.");
-        return;
-      }
+      const hostImageInput = document.getElementById("hostImageInput");
+      const hiddenImageInput = document.getElementById("hiddenImageInput");
+      const readerHost = new FileReader();
+      const readerHidden = new FileReader();
 
-      const hostReader = new FileReader();
-      const hiddenReader = new FileReader();
+      readerHost.onload = function(e) {
+        const hostImage = new Image();
+        hostImage.onload = function() {
+          const readerHidden = new FileReader();
+          readerHidden.onload = function(e) {
+            const hiddenImage = new Image();
+            hiddenImage.onload = function() {
+              const canvas = document.createElement('canvas');
+              const ctx = canvas.getContext('2d');
+              canvas.width = hostImage.width;
+              canvas.height = hostImage.height);
+              ctx.drawImage(hostImage, 0, 0);
 
-      hostReader.onload = function (e1) {
-        hiddenReader.onload = function (e2) {
-          const hostImg = new Image();
-          const hiddenImg = new Image();
-          hostImg.onload = function () {
-            hiddenImg.onload = function () {
-              const canvas = document.getElementById("canvas");
-              const ctx = canvas.getContext("2d");
-              canvas.width = hostImg.width;
-              canvas.height = hostImg.height;
-              ctx.drawImage(hostImg, 0, 0);
-              const hostData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+              // Implementar codificação da imagem oculta dentro da imagem hospedada aqui
 
-              const tempCanvas = document.createElement("canvas");
-              const tempCtx = tempCanvas.getContext("2d");
-              tempCanvas.width = hiddenImg.width;
-              tempCanvas.height = hiddenImg.height;
-              tempCtx.drawImage(hiddenImg, 0, 0);
-              const hiddenData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+              const dataURL = canvas.toDataURL();
+              const imgEncodedOutput = document.getElementById("imgEncodedOutput");
+              imgEncodedOutput.src = dataURL;
 
-              for (let i = 0; i < hiddenData.data.length && i < hostData.data.length; i++) {
-                hostData.data[i] = (hostData.data[i] & 0b11110000) | (hiddenData.data[i] >> 4);
-              }
-
-              ctx.putImageData(hostData, 0, 0);
-              const dataUrl = canvas.toDataURL("image/png");
-              document.getElementById("imgEncodedOutput").src = dataUrl;
-              const link = document.getElementById("imgDownloadLink");
-              link.href = dataUrl;
-              link.style.display = "block";
+              const imgDownloadLink = document.getElementById("imgDownloadLink");
+              imgDownloadLink.style.display = 'inline';
+              imgDownloadLink.href = dataURL;
             };
-            hiddenImg.src = e2.target.result;
+            hiddenImage.src = e.target.result;
           };
-          hostImg.src = e1.target.result;
+          readerHidden.readAsDataURL(hiddenImageInput.files[0]);
         };
-        hiddenReader.readAsDataURL(hiddenFile);
+        hostImage.src = e.target.result;
       };
-      hostReader.readAsDataURL(hostFile);
+      readerHost.readAsDataURL(hostImageInput.files[0]);
     }
 
     function decodeHiddenImage() {
-      const file = document.getElementById("imgToDecodeInput").files[0];
-      if (!file) {
-        alert("Escolha uma imagem.");
-        return;
-      }
-
+      const fileInput = document.getElementById("imgToDecodeInput");
       const reader = new FileReader();
-      reader.onload = function (e) {
-        const img = new Image();
-        img.onload = function () {
-          const canvas = document.getElementById("canvas");
-          const ctx = canvas.getContext("2d");
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0);
-          const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const hiddenData = ctx.createImageData(canvas.width, canvas.height);
 
-          for (let i = 0; i < data.data.length; i++) {
-            hiddenData.data[i] = (data.data[i]
+      reader.onload = function(e) {
+        const image = new Image();
+        image.onload = function() {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = image.width;
+          canvas.height = image.height;
+          ctx.drawImage(image, 0, 0);
+
+          // Implementar decodificação da imagem oculta aqui
+        };
+        image.src = e.target.result;
+      };
+
+      reader.readAsDataURL(fileInput.files[0]);
+    }
+  </script>
+
+</body>
+</html>
