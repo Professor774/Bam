@@ -1,9 +1,10 @@
-<!DOCTYPE html><html lang="pt-BR">
+<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>VaultBox Chat</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.7.0/dist/umd/supabase.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -59,9 +60,11 @@
       <input type="text" id="message-input" placeholder="Digite sua mensagem..." required />
       <button type="submit">Enviar</button>
     </form>
-  </div>  <script>
-    const SUPABASE_URL = 'https://bwhzxwpzxdkkxykebjmo.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGci...'; // Truncado por segurança pública
+  </div>
+  
+  <script>
+    const SUPABASE_URL = 'https://bwhzxwpzxdkkxykebjmo.supabase.co';  // Substitua pela sua URL
+    const SUPABASE_ANON_KEY = 'eyJhbGci...';  // Substitua pela sua chave
 
     const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const messagesContainer = document.getElementById('messages');
@@ -77,7 +80,11 @@
     };
 
     const loadMessages = async () => {
-      const { data } = await supabase.from('messages').select('*').order('created_at', { ascending: true });
+      const { data, error } = await supabase.from('messages').select('*').order('created_at', { ascending: true });
+      if (error) {
+        console.error("Erro ao carregar mensagens:", error);
+        return;
+      }
       data.forEach(addMessage);
     };
 
@@ -98,5 +105,6 @@
     });
 
     loadMessages();
-  </script></body>
+  </script>
+</body>
 </html>
