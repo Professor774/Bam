@@ -1,271 +1,93 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>LINO</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VaultBox</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #111;
-      color: #fff;
+      background-color: #111;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .container {
       text-align: center;
-      padding: 20px;
+      max-width: 500px;
     }
-    h1 {
-      color: #f00;
-      font-size: 36px;
-      letter-spacing: 4px;
-    }
-    h2 {
-      margin-top: 30px;
-      color: #ff4444;
-    }
-    input, button, textarea {
-      margin: 10px auto;
+
+    input[type="password"] {
       padding: 10px;
-      width: 90%;
-      max-width: 400px;
-      display: block;
+      font-size: 18px;
+      margin-top: 20px;
+      border-radius: 5px;
       border: none;
-      border-radius: 8px;
-      background: #222;
-      color: #fff;
+      text-align: center;
     }
+
     button {
-      background: #f00;
+      padding: 10px 20px;
+      margin-top: 10px;
+      font-size: 16px;
+      border: none;
+      background-color: #333;
+      color: white;
+      border-radius: 5px;
       cursor: pointer;
-      font-weight: bold;
     }
-    button:hover {
-      background: #c00;
-    }
-    img {
-      max-width: 90%;
-      margin: 10px auto;
-      display: block;
-    }
-    #canvas {
+
+    .content {
       display: none;
+      flex-direction: column;
+      gap: 30px;
+      margin-top: 30px;
     }
-    #loginScreen {
-      display: block;
+
+    .media {
+      background: #222;
+      padding: 20px;
+      border-radius: 10px;
     }
-    #mainContent {
-      display: none;
+
+    .media img,
+    .media video {
+      max-width: 100%;
+      border-radius: 10px;
     }
-    #logo {
-      font-size: 48px;
-      font-weight: bold;
-      margin-bottom: 20px;
-      color: #f00;
-      text-shadow: 2px 2px #000;
+
+    .media a {
+      color: #0af;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 10px;
+    }
+
+    .media p {
+      margin-top: 10px;
     }
   </style>
 </head>
+
 <body>
+  <div class="container">
+    <h1>VaultBox</h1>
+    <input type="password" id="senha" placeholder="Digite a senha" />
+    <button onclick="verificarSenha()">Acessar</button>
 
-  <div id="loginScreen">
-    <div id="logo">LINO</div>
-    <input type="password" id="passwordInput" placeholder="Digite a senha de acesso..." />
-    <button onclick="checkPassword()">Entrar</button>
-  </div>
+    <div id="conteudo" class="content">
+      <!-- Mensagem com imagem -->
+      <div class="media">
+        <img src="https://via.placeholder.com/400x250.png?text=Mensagem+Secreta" alt="Imagem com mensagem" />
+        <p>Mensagem: “A entrega será feita amanhã às 14h na estação central.”</p>
+        <a href="https://via.placeholder.com/400x250.png?text=Mensagem+Secreta" download>Download da imagem</a>
+      </div>
 
-  <div id="mainContent">
-    <h1>LINO</h1>
-
-    <!-- Codificador de Mensagem -->
-    <h2>1. Codificar Mensagem em Imagem</h2>
-    <input type="file" id="baseImageInput" accept="image/*">
-    <textarea id="secretMessage" placeholder="Digite a mensagem secreta..."></textarea>
-    <button onclick="encodeMessage()">Codificar</button>
-    <a id="downloadLink" style="display:none;" download="imagem_codificada.png">Salvar imagem codificada</a>
-    <img id="outputImage" />
-
-    <hr />
-
-    <!-- Decodificador de Mensagem -->
-    <h2>2. Decodificar Mensagem</h2>
-    <input type="file" id="imageInput" accept="image/*" />
-    <button onclick="decodeMessage()">Revelar Mensagem</button>
-    <p id="result" style="font-weight: bold; font-size: 18px;"></p>
-
-    <hr />
-
-    <!-- Codificar Imagem dentro de Imagem -->
-    <h2>3. Esconder Imagem dentro de outra</h2>
-    <input type="file" id="hostImageInput" accept="image/*">
-    <input type="file" id="hiddenImageInput" accept="image/*">
-    <button onclick="encodeHiddenImage()">Codificar Imagem</button>
-    <a id="imgDownloadLink" style="display:none;" download="img_oculta.png">Salvar imagem com outra imagem oculta</a>
-    <img id="imgEncodedOutput" />
-
-    <hr />
-
-    <!-- Decodificar Imagem Oculta -->
-    <h2>4. Revelar Imagem Oculta</h2>
-    <input type="file" id="imgToDecodeInput" accept="image/*" />
-    <button onclick="decodeHiddenImage()">Revelar Imagem Oculta</button>
-    <img id="decodedHiddenImage" />
-
-    <canvas id="canvas"></canvas>
-  </div>
-
-  <script>
-    function checkPassword() {
-      const password = document.getElementById('passwordInput').value;
-      if (password === '458') {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('mainContent').style.display = 'block';
-      } else {
-        alert('Senha incorreta!');
-      }
-    }
-
-    // Funções para codificar e decodificar mensagens
-    function encodeMessage() {
-      const fileInput = document.getElementById("baseImageInput");
-      const secretMessage = document.getElementById("secretMessage").value;
-      const reader = new FileReader();
-
-      reader.onload = function(e) {
-        const image = new Image();
-        image.onload = function() {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          canvas.width = image.width;
-          canvas.height = image.height;
-          ctx.drawImage(image, 0, 0);
-
-          const messageBinary = Array.from(secretMessage).map(char => char.charCodeAt(0).toString(2).padStart(8, '0')).join('');
-          let pixelIndex = 0;
-
-          for (let i = 0; i < messageBinary.length; i++) {
-            const x = pixelIndex % canvas.width;
-            const y = Math.floor(pixelIndex / canvas.width);
-            const pixel = ctx.getImageData(x, y, 1, 1);
-            const pixelData = pixel.data;
-
-            const bit = messageBinary[i];
-            pixelData[0] = (pixelData[0] & 0xFE) | bit; // Modificando o último bit do canal vermelho
-            ctx.putImageData(pixel, x, y);
-
-            pixelIndex++;
-            if (pixelIndex >= canvas.width * canvas.height) break;
-          }
-
-          const dataURL = canvas.toDataURL();
-          const outputImage = document.getElementById("outputImage");
-          outputImage.src = dataURL;
-
-          const downloadLink = document.getElementById("downloadLink");
-          downloadLink.style.display = 'inline';
-          downloadLink.href = dataURL;
-        };
-        image.src = e.target.result;
-      };
-
-      reader.readAsDataURL(fileInput.files[0]);
-    }
-
-    function decodeMessage() {
-      const fileInput = document.getElementById("imageInput");
-      const reader = new FileReader();
-
-      reader.onload = function(e) {
-        const image = new Image();
-        image.onload = function() {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          canvas.width = image.width;
-          canvas.height = image.height;
-          ctx.drawImage(image, 0, 0);
-
-          let messageBinary = '';
-          for (let i = 0; i < canvas.width * canvas.height; i++) {
-            const x = i % canvas.width;
-            const y = Math.floor(i / canvas.width);
-            const pixel = ctx.getImageData(x, y, 1, 1);
-            const pixelData = pixel.data;
-
-            const bit = pixelData[0] & 1;
-            messageBinary += bit;
-            if (messageBinary.length % 8 === 0) {
-              const byte = messageBinary.slice(-8);
-              const charCode = parseInt(byte, 2);
-              if (charCode === 0) break; // Fim da mensagem
-            }
-          }
-
-          const message = messageBinary.match(/.{8}/g).map(byte => String.fromCharCode(parseInt(byte, 2))).join('');
-          const resultElement = document.getElementById("result");
-          resultElement.textContent = message;
-        };
-        image.src = e.target.result;
-      };
-
-      reader.readAsDataURL(fileInput.files[0]);
-    }
-
-    function encodeHiddenImage() {
-      const hostImageInput = document.getElementById("hostImageInput");
-      const hiddenImageInput = document.getElementById("hiddenImageInput");
-      const readerHost = new FileReader();
-      const readerHidden = new FileReader();
-
-      readerHost.onload = function(e) {
-        const hostImage = new Image();
-        hostImage.onload = function() {
-          const readerHidden = new FileReader();
-          readerHidden.onload = function(e) {
-            const hiddenImage = new Image();
-            hiddenImage.onload = function() {
-              const canvas = document.createElement('canvas');
-              const ctx = canvas.getContext('2d');
-              canvas.width = hostImage.width;
-              canvas.height = hostImage.height);
-              ctx.drawImage(hostImage, 0, 0);
-
-              // Implementar codificação da imagem oculta dentro da imagem hospedada aqui
-
-              const dataURL = canvas.toDataURL();
-              const imgEncodedOutput = document.getElementById("imgEncodedOutput");
-              imgEncodedOutput.src = dataURL;
-
-              const imgDownloadLink = document.getElementById("imgDownloadLink");
-              imgDownloadLink.style.display = 'inline';
-              imgDownloadLink.href = dataURL;
-            };
-            hiddenImage.src = e.target.result;
-          };
-          readerHidden.readAsDataURL(hiddenImageInput.files[0]);
-        };
-        hostImage.src = e.target.result;
-      };
-      readerHost.readAsDataURL(hostImageInput.files[0]);
-    }
-
-    function decodeHiddenImage() {
-      const fileInput = document.getElementById("imgToDecodeInput");
-      const reader = new FileReader();
-
-      reader.onload = function(e) {
-        const image = new Image();
-        image.onload = function() {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          canvas.width = image.width;
-          canvas.height = image.height;
-          ctx.drawImage(image, 0, 0);
-
-          // Implementar decodificação da imagem oculta aqui
-        };
-        image.src = e.target.result;
-      };
-
-      reader.readAsDataURL(fileInput.files[0]);
-    }
-  </script>
-
-</body>
-</html>
+      <!-- Apenas imagem com botão de download -->
+      <div
