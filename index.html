@@ -4,54 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>VaultBox Chat</title>
-  <script type="module">
-    // Importa o Firebase diretamente
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-    // Configuração do Firebase (seu projeto)
-    const firebaseConfig = {
-      apiKey: "AIzaSyDPzL...yO-Y", // (use a chave que já configuramos)
-      authDomain: "vaultbox-chat.firebaseapp.com",
-      databaseURL: "https://vaultbox-chat-default-rtdb.firebaseio.com",
-      projectId: "vaultbox-chat",
-      storageBucket: "vaultbox-chat.appspot.com",
-      messagingSenderId: "47672372860",
-      appId: "1:47672372860:web:f92d51c9b2d161299ce65b"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
-    const messagesRef = ref(database, 'messages');
-
-    // DOM
-    const messagesContainer = document.getElementById('messages');
-    const form = document.getElementById('message-form');
-    const input = document.getElementById('message-input');
-
-    // Enviar mensagem
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const text = input.value.trim();
-      if (text) {
-        await push(messagesRef, {
-          content: text,
-          timestamp: Date.now()
-        });
-        input.value = '';
-      }
-    });
-
-    // Receber mensagens em tempo real
-    onChildAdded(messagesRef, (snapshot) => {
-      const msg = snapshot.val();
-      const div = document.createElement('div');
-      div.className = 'message';
-      div.textContent = msg.content;
-      messagesContainer.appendChild(div);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    });
-  </script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -108,5 +62,45 @@
       <button type="submit">Enviar</button>
     </form>
   </div>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyD7I-TESTE-KeLmxGp",
+      authDomain: "vaultbox-chat.firebaseapp.com",
+      projectId: "vaultbox-chat",
+      storageBucket: "vaultbox-chat.appspot.com",
+      messagingSenderId: "1234567890",
+      appId: "1:1234567890:web:abcd1234",
+      databaseURL: "https://vaultbox-chat-default-rtdb.firebaseio.com"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const messagesRef = db.ref("messages");
+
+    const messagesContainer = document.getElementById("messages");
+    const form = document.getElementById("message-form");
+    const input = document.getElementById("message-input");
+
+    const addMessage = (text) => {
+      const div = document.createElement("div");
+      div.className = "message";
+      div.textContent = text;
+      messagesContainer.appendChild(div);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    };
+
+    messagesRef.on("child_added", (data) => {
+      addMessage(data.val().text);
+    });
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (text !== "") {
+        messagesRef.push({ text });
+        input.value = "";
+      }
+    });
+  </script>
 </body>
 </html>
