@@ -1,0 +1,21 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Cofre</title>
+  <script defer src="script.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Bem-vindo ao Cofre</h1>
+  <input type="password" id="senha" placeholder="Digite a senha">
+  <button onclick="verificarSenha()">Entrar</button>
+  <div id="cofre" style="display:none;">
+    <h2>Enviar foto/vídeo</h2>
+    <input type="file" id="arquivo" accept="image/*,video/*">
+    <button onclick="uploadArquivo()">Enviar</button>
+    <div id="galeria"></div>
+  </div>
+</body>
+</html>
